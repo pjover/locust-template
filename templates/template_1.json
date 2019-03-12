@@ -1,0 +1,31 @@
+{
+  "audit": {
+    "createdBy": "Locust",
+    "createdOn": "{{ createdOn }}",
+    "lastUpdatedBy": "Locust",
+    "lastUpdatedOn": "{{ lastUpdatedOn }}"
+	},
+  "bookingPeriodFrom": "{{ bookingPeriodFrom }}",
+  "contractCode": {{ contractCode }},
+  "featureCode": "{{ featureCode }}",
+  "id": "{{ id }}",
+  "isOnRequest": {{ isOnRequest }},
+  "isOpenOn": {
+    "monday": {{ monday }},
+    "tuesday": {{ tuesday }},
+    "wednesday": {{ wednesday }},
+    "thursday": {{ thursday }},
+    "friday": {{ friday }},
+    "saturday": {{ saturday }},
+    "sunday": {{ sunday }},
+  },
+  "lineNumber": {{ lineNumber }},
+  "officeId": {{ officeId }},
+  "rateId": {{ rateId }},
+  "roomCode": "{{ roomCode }}",
+  "travelWindow": {
+    "from": "{{ travelWindowFrom }}",
+    "until": "{{ travelWindowUntil }}"
+  },
+  "type": "{{ type }}"
+}
