@@ -1,16 +1,26 @@
 from locust import HttpLocust, TaskSet, task
 
+from Fields import Fields
 from TestOne import TestOne
+
+ENVIRONMENT = "LOCAL"
+DEBUG_MODE = True
+ALL_FIELDS = Fields({
+    "adr_type",
+    "boolean"
+})
 
 
 class TestOneTaskSet(TaskSet):
+    test_one = TestOne(
+        environment=ENVIRONMENT,
+        fields=ALL_FIELDS,
+        locust_mode=True,
+        debug_mode=DEBUG_MODE)
+
     @task
-    def run(self):
-        test_runner = TestOne(
-            environment="LOCAL",
-            locust_mode=True,
-            debug_mode=False)
-        test_runner.run()
+    def send(self):
+        self.test_one.send(self.client)
 
 
 class TestOneLocust(HttpLocust):

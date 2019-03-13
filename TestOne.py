@@ -6,15 +6,12 @@ from Fields import Fields
 
 class TestOne(AbstractTest):
 
-    def __init__(self, environment, locust_mode, debug_mode):
+    def __init__(self, environment, fields, locust_mode, debug_mode):
         super().__init__(
             environment,
             "crud/arrivalDeparture/insert",
             "template_1.json",
-            Fields({
-                "adr_type",
-                "boolean"
-            }),
+            fields,
             locust_mode,
             debug_mode)
 
@@ -36,6 +33,10 @@ class TestOne(AbstractTest):
 if __name__ == "__main__":
     test = TestOne(
             environment="LOCAL",
+            fields=Fields({
+                "adr_type",
+                "boolean"
+            }),
             locust_mode=False,
             debug_mode=True)
     test.send(requests)
