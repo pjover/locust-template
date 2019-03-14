@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 import requests
 
@@ -8,14 +9,14 @@ from Fields import Fields
 
 class TestOne(AbstractTest):
 
-    def __init__(self, environment, fields, locust_mode, debug_mode):
+    def __init__(self, test_url, fields, locust_mode, log_level=logging.INFO):
         super().__init__(
-            environment,
+            test_url,
             "crud/arrivalDeparture/insert",
             "template_1.json",
             fields,
             locust_mode,
-            debug_mode)
+            log_level)
 
     def get_random_request(self):
         return self.get_template().render(
@@ -45,8 +46,8 @@ class TestOne(AbstractTest):
 
 if __name__ == "__main__":
     test = TestOne(
-            environment="LOCAL",
+            test_url="http://localhost:8085",
             fields=Fields(),
             locust_mode=False,
-            debug_mode=True)
-    test.send(requests)
+            log_level=logging.DEBUG)
+    test.send(requests, "test")

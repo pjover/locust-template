@@ -1,5 +1,6 @@
 import datetime
 import inspect
+import logging
 import os
 import random
 import string
@@ -7,45 +8,35 @@ from abc import abstractmethod
 
 import jinja2
 
+HEADERS = {"Accept": "application/json", "Content-Type": "application/json"}
+TIMEOUT = 60.0  # seconds
+VERIFY = False
+
 
 class AbstractTest:
     __TEMPLATE_PATH = "%s/templates/" % os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
     __LOG_FILENAME = "log.txt"
     __URL_PREFIX = "/"
-    __HEADERS = {"Accept": "application/json", "Content-Type": "application/json"}
-    __TIMEOUT = 60.0  # seconds
-    __VERIFY = False
     __BUFFER_MAX_SIZE = 1000
     __RANDOM_CHARS_SEED = string.ascii_uppercase + string.digits
+    __LOGGING_FORMAT = '%(asctime)-15s %(message)s'
 
-    def __init__(self, environment, endpoint, template_filename, fields, locust_mode, debug_mode):
-        self.__init_test_host(environment)
-        self.init_logs(environment)
+    def __init__(self, test_url, endpoint, template_filename, fields, locust_mode, log_level):
+        self.__test_url = test_url
         self.__endpoint = endpoint
         self.template_filename = template_filename
         self.__fields = fields
         self.__locust_mode = locust_mode
-        self.__debug_mode = debug_mode
+
+        self.__logger = self.init_logging(log_level)
         self.__init_jinja()
-        self.debug("Working with host '%s'" % self.__test_host)
+        self.__logger.info("Started url:'%s' endpoint:'%s' template:'%s'", test_url, endpoint, template_filename)
 
-    def __init_test_host(self, environment):
-        if environment == "LOCAL":
-            self.__test_host = "http://localhost:8085"
-        elif environment == "DEV":
-            self.__test_host = "http://hotel-contract-service.dev-hbg-aws-eu-west-1.service"
-        elif environment == "TEST":
-            self.__test_host = "http://hotel-contract-service.test-hbg-aws-eu-west-1.service"
-        else:
-            raise ValueError("Invalid environment, should be `LOCAL`, `DEV` or `TEST`")
-
-    def init_logs(self, environment):
-        open(self.__LOG_FILENAME, "w") \
-            .write("%s (%s environment)\n\n" % (str(datetime.datetime.now()), environment))
-
-    def debug(self, log_to_print):
-        if self.__debug_mode:
-            print(log_to_print)
+    def init_logging(self, log_level):
+        logging.basicConfig(format=self.__LOGGING_FORMAT)
+        logger = logging.getLogger(self.__class__.__name__)
+        logger.setLevel(log_level)
+        return logger
 
     def __init_jinja(self):
         env = jinja2.Environment(
@@ -64,29 +55,31 @@ class AbstractTest:
     def get_random(self, field):
         return self.__fields.get_random(field)
 
-    def send(self, request, body=None):
+    def send(self, request, name, body=None):
         if not body:
             body = self.get_random_request()
         if self.__locust_mode:
             response = request.request(
                 url=self.__get_url(self.__endpoint),
-                name=self.__endpoint,
+                name=name,
                 method="POST",
-                headers=self.__HEADERS,
+                headers=HEADERS,
                 data=body,
-                timeout=self.__TIMEOUT,
-                verify=self.__VERIFY)
+                timeout=TIMEOUT,
+                verify=VERIFY)
         else:
             response = request.request(
                 url=self.__get_url(self.__endpoint),
                 method="POST",
-                headers=self.__HEADERS,
+                headers=HEADERS,
                 data=body,
-                timeout=self.__TIMEOUT,
-                verify=self.__VERIFY)
+                timeout=TIMEOUT,
+                verify=VERIFY)
         if self.__is_error(response):
-            self.__log_error("POST (%s): %s" % (self.__endpoint, body), response)
-            return None
+            self.__logger.error("POST to URL: %s\nRequest: %s\nResponse status code: %s\nResponse text: %s", self.__endpoint, body, response.status_code, response.text)
+        else:
+            self.__logger.debug(response.text)
+
         return response
 
     def __get_url(self, *endpoint_name_parts):
@@ -96,22 +89,13 @@ class AbstractTest:
             url = self.__URL_PREFIX + suffix
         else:
             # At test mode (without locust) adds the server address to the url
-            url = self.__test_host + self.__URL_PREFIX + suffix
-        self.debug("URL: %s" % url)
+            url = self.__test_url + self.__URL_PREFIX + suffix
+        self.__logger.debug("URL: %s", url)
         return url
 
     @staticmethod
     def __is_error(response):
         return response.status_code != 200
-
-    def __log_error(self, request, response):
-        log_txt = "Input: %s\nResponse status: %s\nResponse: %s" % (request, response.status_code, response.text)
-        self.debug(log_txt)
-        try:
-            with open(self.__LOG_FILENAME, "a") as f:
-                f.write(log_txt)
-        except ValueError:
-            pass
 
     @staticmethod
     def get_random_int(low, high):
