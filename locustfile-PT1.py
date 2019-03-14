@@ -1,10 +1,14 @@
 import logging
 
-from AbstractTest import AbstractTest
+from locust import HttpLocust, TaskSet, task
+
+from PerformanceTest import PerformanceTest
 from Fields import Fields
 
+ALL_FIELDS = Fields()
 
-class TestOne(AbstractTest):
+
+class PT1(PerformanceTest):
 
     def __init__(self, fields, log_level=logging.INFO):
         super().__init__(
@@ -39,9 +43,27 @@ class TestOne(AbstractTest):
         )
 
 
+class PT1TaskSet(TaskSet):
+    test_one = PT1(ALL_FIELDS)
+
+    @task
+    def send(self):
+        self.test_one.send(
+            name="Test one",
+            locust=self.locust)
+
+
+class PT1Locust(HttpLocust):
+    host = "http://localhost:8085"
+    task_set = PT1TaskSet
+    min_wait = 0
+    max_wait = 1000
+    weight = 100
+
+
 if __name__ == "__main__":
-    test = TestOne(Fields(), logging.DEBUG)
+    test = PT1(Fields(), logging.DEBUG)
     test.send(
-        name="Test",
+        name="Performance Test 1",
         locust=None,
         host="http://localhost:8085")

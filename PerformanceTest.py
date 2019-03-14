@@ -14,7 +14,7 @@ TIMEOUT = 60.0  # seconds
 VERIFY = False
 
 
-class AbstractTest:
+class PerformanceTest:
     __TEMPLATE_PATH = "%s/templates/" % os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
     __LOG_FILENAME = "log.txt"
     __URL_PREFIX = "/"

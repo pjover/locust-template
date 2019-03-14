@@ -25,10 +25,10 @@ Locust tries to simulate real users, a great number of concurrent users with ran
 
 ### One server
 
-After configuring the scripts, just run them with `locust`. For example to run the test TestOne against the URL http://my-url:8080/ run:
+After configuring the scripts, just run them with `locust`. For example to run the test PT1 against the URL http://my-url:8080/ run:
 
 ```
-locust -f locustfile-TestOne.py -H http://my-url:8080/
+locust -f locustfile-PT1.py -H http://my-url:8080/
 ```
 
 After running this command, go to the URL printed by `locust`, by default http://localhost:8089/ and follow the on-screen instructions. You will be able to specify the number of clients to simulate and the ramp-up rate, and then lauch the tests and see the statistics in real time (as well as stop the tests when needed).
