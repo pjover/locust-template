@@ -7,17 +7,13 @@ ALL_FIELDS = Fields()
 
 
 class TestOneTaskSet(TaskSet):
-
-    # def __init__(self):
-    #     super().__init__(self)
-    test_one = TestOne(
-        test_url="http://localhost:8085", #self.locust.host,
-        fields=ALL_FIELDS,
-        locust_mode=True)
+    test_one = TestOne(ALL_FIELDS)
 
     @task
     def send(self):
-        self.test_one.send(self.client, "Test one")
+        self.test_one.send(
+            name="Test one",
+            locust=self.locust)
 
 
 class TestOneLocust(HttpLocust):

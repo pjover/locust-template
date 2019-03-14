@@ -7,6 +7,7 @@ import string
 from abc import abstractmethod
 
 import jinja2
+import requests
 
 HEADERS = {"Accept": "application/json", "Content-Type": "application/json"}
 TIMEOUT = 60.0  # seconds
@@ -21,16 +22,14 @@ class AbstractTest:
     __RANDOM_CHARS_SEED = string.ascii_uppercase + string.digits
     __LOGGING_FORMAT = '%(asctime)-15s %(message)s'
 
-    def __init__(self, test_url, endpoint, template_filename, fields, locust_mode, log_level):
-        self.__test_url = test_url
+    def __init__(self, endpoint, template_filename, fields, log_level):
         self.__endpoint = endpoint
         self.template_filename = template_filename
         self.__fields = fields
-        self.__locust_mode = locust_mode
 
         self.__logger = self.init_logging(log_level)
         self.__init_jinja()
-        self.__logger.info("Started url:'%s' endpoint:'%s' template:'%s'", test_url, endpoint, template_filename)
+        self.__logger.info("Started endpoint:'%s' template:'%s'", endpoint, template_filename)
 
     def init_logging(self, log_level):
         logging.basicConfig(format=self.__LOGGING_FORMAT)
@@ -55,43 +54,57 @@ class AbstractTest:
     def get_random(self, field):
         return self.__fields.get_random(field)
 
-    def send(self, request, name, body=None):
+    def send(self, name, locust, host=None, body=None):
         if not body:
             body = self.get_random_request()
-        if self.__locust_mode:
-            response = request.request(
-                url=self.__get_url(self.__endpoint),
-                name=name,
-                method="POST",
-                headers=HEADERS,
-                data=body,
-                timeout=TIMEOUT,
-                verify=VERIFY)
+        if locust:
+            url = self.__get_url()
+            response = self.__send_with_locust(name, locust, url, body)
         else:
-            response = request.request(
-                url=self.__get_url(self.__endpoint),
-                method="POST",
-                headers=HEADERS,
-                data=body,
-                timeout=TIMEOUT,
-                verify=VERIFY)
+            if not host:
+                raise ValueError("host must be defined if locust is None")
+            url = self.__get_url(host)
+            response = self.__send_without_locust(url, body)
+
         if self.__is_error(response):
-            self.__logger.error("POST to URL: %s\nRequest: %s\nResponse status code: %s\nResponse text: %s", self.__endpoint, body, response.status_code, response.text)
+            self.__logger.error("POST to URL: %s\nRequest: %s\nResponse status code: %s\nResponse text: %s",
+                                url, body, response.status_code, response.text)
         else:
             self.__logger.debug(response.text)
 
         return response
 
-    def __get_url(self, *endpoint_name_parts):
-        suffix = "/".join(endpoint_name_parts)
-        if self.__locust_mode:
-            # Locust will add the server address to the url
-            url = self.__URL_PREFIX + suffix
+    def __get_url(self, host=None):
+        suffix = self.__get_url_suffix(self.__endpoint)
+        if host:
+            url = host + suffix
         else:
-            # At test mode (without locust) adds the server address to the url
-            url = self.__test_url + self.__URL_PREFIX + suffix
+            url = suffix
         self.__logger.debug("URL: %s", url)
         return url
+
+    def __get_url_suffix(self, *endpoint_name_parts):
+        suffix = "/".join(endpoint_name_parts)
+        return self.__URL_PREFIX + suffix
+
+    def __send_with_locust(self, name, locust, url, body):
+        return locust.client.request(
+            url=url,
+            name=name,
+            method="POST",
+            headers=HEADERS,
+            data=body,
+            timeout=TIMEOUT,
+            verify=VERIFY)
+
+    def __send_without_locust(self, url, body):
+        return requests.request(
+            url=url,
+            method="POST",
+            headers=HEADERS,
+            data=body,
+            timeout=TIMEOUT,
+            verify=VERIFY)
 
     @staticmethod
     def __is_error(response):

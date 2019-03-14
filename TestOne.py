@@ -1,7 +1,4 @@
-import datetime
 import logging
-
-import requests
 
 from AbstractTest import AbstractTest
 from Fields import Fields
@@ -9,14 +6,12 @@ from Fields import Fields
 
 class TestOne(AbstractTest):
 
-    def __init__(self, test_url, fields, locust_mode, log_level=logging.INFO):
+    def __init__(self, fields, log_level=logging.INFO):
         super().__init__(
-            test_url,
-            "crud/arrivalDeparture/insert",
-            "template_1.json",
-            fields,
-            locust_mode,
-            log_level)
+            endpoint="crud/arrivalDeparture/insert",
+            template_filename="template_1.json",
+            fields=fields,
+            log_level=log_level)
 
     def get_random_request(self):
         return self.get_template().render(
@@ -45,9 +40,8 @@ class TestOne(AbstractTest):
 
 
 if __name__ == "__main__":
-    test = TestOne(
-            test_url="http://localhost:8085",
-            fields=Fields(),
-            locust_mode=False,
-            log_level=logging.DEBUG)
-    test.send(requests, "test")
+    test = TestOne(Fields(), logging.DEBUG)
+    test.send(
+        name="Test",
+        locust=None,
+        host="http://localhost:8085")
