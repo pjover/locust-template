@@ -5,10 +5,7 @@ from TestOne import TestOne
 
 ENVIRONMENT = "LOCAL"
 DEBUG_MODE = True
-ALL_FIELDS = Fields({
-    "adr_type",
-    "boolean"
-})
+ALL_FIELDS = Fields()
 
 
 class TestOneTaskSet(TaskSet):

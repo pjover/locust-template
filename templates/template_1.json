@@ -17,7 +17,7 @@
     "thursday": {{ thursday }},
     "friday": {{ friday }},
     "saturday": {{ saturday }},
-    "sunday": {{ sunday }},
+    "sunday": {{ sunday }}
   },
   "lineNumber": {{ lineNumber }},
   "officeId": {{ officeId }},

@@ -2,6 +2,7 @@ import datetime
 import inspect
 import os
 import random
+import string
 from abc import abstractmethod
 
 import jinja2
@@ -15,6 +16,7 @@ class AbstractTest:
     __TIMEOUT = 60.0  # seconds
     __VERIFY = False
     __BUFFER_MAX_SIZE = 1000
+    __RANDOM_CHARS_SEED = string.ascii_uppercase + string.digits
 
     def __init__(self, environment, endpoint, template_filename, fields, locust_mode, debug_mode):
         self.__init_test_host(environment)
@@ -112,8 +114,23 @@ class AbstractTest:
             pass
 
     @staticmethod
+    def get_random_int(low, high):
+        return random.randint(low, high)
+
+    @staticmethod
+    def get_random_boolean():
+        return str(bool(random.getrandbits(1))).lower()
+
+    def get_random_string(self, size):
+        return ''.join(random.choice(self.__RANDOM_CHARS_SEED) for _ in range(size))
+
+    @staticmethod
     def get_random_date(days_before_today, days_after_today):
         period_start = datetime.datetime.today() - datetime.timedelta(days=days_before_today)
         random_days = random.randint(0, days_before_today + days_after_today)
         random_date = period_start + datetime.timedelta(days=random_days)
         return random_date.strftime('%Y-%m-%d')
+
+    @staticmethod
+    def get_current_datetime():
+        return datetime.datetime.now().isoformat()
